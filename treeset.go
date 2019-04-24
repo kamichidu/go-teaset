@@ -16,14 +16,14 @@ type TreeSet struct {
 	mu sync.RWMutex
 }
 
-type treeElement struct {
+type _TreeSetElement struct {
 	compare func(interface{}, interface{}) int
 
 	Value interface{}
 }
 
-func (e *treeElement) Less(other_ btree.Item) bool {
-	other := other_.(*treeElement)
+func (e *_TreeSetElement) Less(other_ btree.Item) bool {
+	other := other_.(*_TreeSetElement)
 	return e.compare(e.Value, other.Value) < 0
 }
 
@@ -36,14 +36,14 @@ func NewTreeSet(compare func(interface{}, interface{}) int) *TreeSet {
 }
 
 func (s *TreeSet) toItem(v interface{}) btree.Item {
-	return &treeElement{
+	return &_TreeSetElement{
 		compare: s.compare,
 		Value:   v,
 	}
 }
 
 func (s *TreeSet) fromItem(v btree.Item) interface{} {
-	return v.(*treeElement).Value
+	return v.(*_TreeSetElement).Value
 }
 
 func (s *TreeSet) Add(v interface{}) {
