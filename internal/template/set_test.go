@@ -2,6 +2,7 @@ package template
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -124,5 +125,61 @@ func testSet(t *testing.T, newSet func() set) {
 	t.Run("Len", func(t *testing.T) {
 		s := newSet()
 		assert.Equal(t, 0, s.Len())
+	})
+}
+
+func benchmarkSet(b *testing.B, newSet func() set, n int) {
+	b.Run("Make Unique", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			s := newSet()
+			for j := 0; j < n; j++ {
+				s.Add(strconv.Itoa(j))
+			}
+			s.ToSlice()
+		}
+	})
+	b.Run("Add", func(b *testing.B) {
+		b.StopTimer()
+		s := newSet()
+		for j := 0; j < n; j++ {
+			s.Add(strconv.Itoa(j))
+		}
+		b.StartTimer()
+		for i := 0; i < b.N; i++ {
+			s.Add(strconv.Itoa(n/2 - i))
+		}
+	})
+	b.Run("Remove", func(b *testing.B) {
+		b.StopTimer()
+		s := newSet()
+		for j := 0; j < n; j++ {
+			s.Add(strconv.Itoa(j))
+		}
+		b.StartTimer()
+		for i := 0; i < b.N; i++ {
+			s.Remove(strconv.Itoa(n/2 - i))
+		}
+	})
+	b.Run("Contains", func(b *testing.B) {
+		b.StopTimer()
+		s := newSet()
+		for j := 0; j < n; j++ {
+			s.Add(strconv.Itoa(j))
+		}
+		b.StartTimer()
+		for i := 0; i < b.N; i++ {
+			s.Contains(strconv.Itoa(n/2 - i))
+		}
+	})
+	b.Run("ToSlice", func(b *testing.B) {
+		b.StopTimer()
+		s := newSet()
+		for j := 0; j < n; j++ {
+			s.Add(strconv.Itoa(j))
+		}
+		b.StartTimer()
+		for i := 0; i < b.N; i++ {
+			s.ToSlice()
+		}
 	})
 }
