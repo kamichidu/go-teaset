@@ -8,18 +8,25 @@ import (
 
 type TreeSet struct {
 	compare func(interface{}, interface{}) int
-	eles    []interface{}
-	mu      sync.RWMutex
+
+	// elements, smaller index is smaller item
+	eles []interface{}
+
+	mu sync.RWMutex
 }
 
 func NewTreeSet(compare func(interface{}, interface{}) int) *TreeSet {
-	return &TreeSet{compare: compare}
+	return &TreeSet{
+		compare: compare,
+	}
 }
+
 func (s *TreeSet) Add(v interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.add(v)
 }
+
 func (s *TreeSet) AddAll(l ...interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -27,12 +34,18 @@ func (s *TreeSet) AddAll(l ...interface{}) {
 		s.add(v)
 	}
 }
+
 func (s *TreeSet) add(v interface{}) {
 	idx := -1
 	for i, ele := range s.eles {
-		if s.compare(v, ele) > 0 {
+		// find greater one
+		cmp := s.compare(v, ele)
+		if cmp < 0 {
 			idx = i
 			break
+		} else if cmp == 0 {
+			// if it is equal one, nothing to do
+			return
 		}
 	}
 	if idx >= 0 {
@@ -45,11 +58,13 @@ func (s *TreeSet) add(v interface{}) {
 		s.eles = append(s.eles, v)
 	}
 }
+
 func (s *TreeSet) Remove(v interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.remove(v)
 }
+
 func (s *TreeSet) RemoveAll(l ...interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -57,9 +72,11 @@ func (s *TreeSet) RemoveAll(l ...interface{}) {
 		s.remove(v)
 	}
 }
+
 func (s *TreeSet) remove(v interface{}) {
 	idx := -1
 	for i, ele := range s.eles {
+		// find equal one
 		if s.compare(v, ele) == 0 {
 			idx = i
 			break
@@ -73,16 +90,19 @@ func (s *TreeSet) remove(v interface{}) {
 	s.eles = append(s.eles, head...)
 	s.eles = append(s.eles, tail...)
 }
+
 func (s *TreeSet) Clear() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.eles = s.eles[:0]
 }
+
 func (s *TreeSet) Contains(v interface{}) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.contains(v)
 }
+
 func (s *TreeSet) ContainsAll(l ...interface{}) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -93,6 +113,7 @@ func (s *TreeSet) ContainsAll(l ...interface{}) bool {
 	}
 	return true
 }
+
 func (s *TreeSet) contains(v interface{}) bool {
 	for _, ele := range s.eles {
 		if s.compare(v, ele) == 0 {
@@ -101,11 +122,13 @@ func (s *TreeSet) contains(v interface{}) bool {
 	}
 	return false
 }
+
 func (s *TreeSet) Len() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return len(s.eles)
 }
+
 func (s *TreeSet) ToSlice() []interface{} {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
