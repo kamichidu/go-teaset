@@ -7,6 +7,7 @@ import (
 type TreeSet struct {
 	compare func(Element, Element) int
 
+	// elements, smaller index is smaller item
 	eles []Element
 
 	mu sync.RWMutex
@@ -36,9 +37,13 @@ func (s *TreeSet) add(v Element) {
 	idx := -1
 	for i, ele := range s.eles {
 		// find greater one
-		if s.compare(v, ele) > 0 {
+		cmp := s.compare(v, ele)
+		if cmp < 0 {
 			idx = i
 			break
+		} else if cmp == 0 {
+			// if it is equal one, nothing to do
+			return
 		}
 	}
 	if idx >= 0 {

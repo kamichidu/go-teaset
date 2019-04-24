@@ -24,9 +24,11 @@ func testSet(t *testing.T, newSet func() set) {
 	equalStringSet := func(t *testing.T, s set, expect ...string) {
 		assert.Equal(t, len(expect), s.Len(), "equal length")
 		l := s.ToSlice()
-		sort.Slice(l, func(i, j int) bool {
-			return strings.Compare(l[i].(string), l[j].(string)) < 0
-		})
+		if _, ok := s.(*HashSet); ok {
+			sort.Slice(l, func(i, j int) bool {
+				return strings.Compare(l[i].(string), l[j].(string)) < 0
+			})
+		}
 		eles := []Element{}
 		for _, v := range l {
 			eles = append(eles, v)
@@ -39,10 +41,24 @@ func testSet(t *testing.T, newSet func() set) {
 		s.Add("a")
 		equalStringSet(t, s, "a")
 	})
+	t.Run("Add", func(t *testing.T) {
+		s := newSet()
+		equalStringSet(t, s)
+		for i := 0; i < 100; i++ {
+			s.Add("a")
+		}
+		equalStringSet(t, s, "a")
+	})
 	t.Run("AddAll", func(t *testing.T) {
 		s := newSet()
 		equalStringSet(t, s)
 		s.AddAll("a", "b")
+		equalStringSet(t, s, "a", "b")
+	})
+	t.Run("AddAll", func(t *testing.T) {
+		s := newSet()
+		equalStringSet(t, s)
+		s.AddAll("a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b", "a", "b")
 		equalStringSet(t, s, "a", "b")
 	})
 	t.Run("Remove", func(t *testing.T) {
