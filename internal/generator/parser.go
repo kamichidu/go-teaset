@@ -19,11 +19,12 @@ var (
 	UseLocal = false
 )
 
-func ParseFile(baseImpl string) (*ast.File, error) {
+func ParseFile(baseImpl string) (*token.FileSet, *ast.File, error) {
 	name := path.Join(templateDir, strings.ToLower(baseImpl)+".go")
 	src := assets.FSMustByte(UseLocal, name)
 	fset := token.NewFileSet()
-	return parser.ParseFile(fset, name, src, parser.AllErrors)
+	aFile, err := parser.ParseFile(fset, name, src, parser.AllErrors|parser.ParseComments)
+	return fset, aFile, err
 }
 
 func ParseElementType(s string) (pkgPath, typName string) {

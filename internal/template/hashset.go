@@ -74,6 +74,7 @@ func (s *HashSet) Len() int {
 	return len(s.eles)
 }
 
+// ToSlice returns an slice containing all of the elements in this set.
 func (s *HashSet) ToSlice() []Element {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
