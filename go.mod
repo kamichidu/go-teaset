@@ -3,6 +3,7 @@ module github.com/kamichidu/go-teaset
 go 1.12
 
 require (
+	github.com/google/btree v1.0.0
 	github.com/mjibson/esc v0.2.0
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/stretchr/testify v1.3.0

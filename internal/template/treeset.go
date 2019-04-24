@@ -2,137 +2,112 @@ package template
 
 import (
 	"sync"
+
+	"github.com/google/btree"
 )
 
 type TreeSet struct {
 	compare func(Element, Element) int
 
-	// elements, smaller index is smaller item
-	eles []Element
+	eles *btree.BTree
 
 	mu sync.RWMutex
+}
+
+type treeElement struct {
+	compare func(Element, Element) int
+
+	Value Element
+}
+
+func (e *treeElement) Less(other_ btree.Item) bool {
+	other := other_.(*treeElement)
+	return e.compare(e.Value, other.Value) < 0
 }
 
 func NewTreeSet(compare func(Element, Element) int) *TreeSet {
 	return &TreeSet{
 		compare: compare,
+		// 2-3-4 tree
+		eles: btree.New(2),
 	}
+}
+
+func (s *TreeSet) toItem(v Element) btree.Item {
+	return &treeElement{
+		compare: s.compare,
+		Value:   v,
+	}
+}
+
+func (s *TreeSet) fromItem(v btree.Item) Element {
+	return v.(*treeElement).Value
 }
 
 func (s *TreeSet) Add(v Element) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.add(v)
+	s.eles.ReplaceOrInsert(s.toItem(v))
 }
 
 func (s *TreeSet) AddAll(l ...Element) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, v := range l {
-		s.add(v)
-	}
-}
-
-func (s *TreeSet) add(v Element) {
-	idx := -1
-	for i, ele := range s.eles {
-		// find greater one
-		cmp := s.compare(v, ele)
-		if cmp < 0 {
-			idx = i
-			break
-		} else if cmp == 0 {
-			// if it is equal one, nothing to do
-			return
-		}
-	}
-	if idx >= 0 {
-		head, tail := s.eles[:idx], s.eles[idx:]
-		s.eles = s.eles[:0]
-		s.eles = append(s.eles, head...)
-		s.eles = append(s.eles, v)
-		s.eles = append(s.eles, tail...)
-	} else {
-		s.eles = append(s.eles, v)
+		s.eles.ReplaceOrInsert(s.toItem(v))
 	}
 }
 
 func (s *TreeSet) Remove(v Element) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.remove(v)
+	s.eles.Delete(s.toItem(v))
 }
 
 func (s *TreeSet) RemoveAll(l ...Element) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, v := range l {
-		s.remove(v)
+		s.eles.Delete(s.toItem(v))
 	}
-}
-
-func (s *TreeSet) remove(v Element) {
-	idx := -1
-	for i, ele := range s.eles {
-		// find equal one
-		if s.compare(v, ele) == 0 {
-			idx = i
-			break
-		}
-	}
-	if idx < 0 {
-		return
-	}
-	head, tail := s.eles[:idx], s.eles[idx+1:]
-	s.eles = s.eles[:0]
-	s.eles = append(s.eles, head...)
-	s.eles = append(s.eles, tail...)
 }
 
 func (s *TreeSet) Clear() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.eles = s.eles[:0]
+	s.eles.Clear(false)
 }
 
 func (s *TreeSet) Contains(v Element) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.contains(v)
+	return s.eles.Has(s.toItem(v))
 }
 
 func (s *TreeSet) ContainsAll(l ...Element) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	for _, v := range l {
-		if !s.contains(v) {
+		if !s.eles.Has(s.toItem(v)) {
 			return false
 		}
 	}
 	return true
 }
 
-func (s *TreeSet) contains(v Element) bool {
-	for _, ele := range s.eles {
-		if s.compare(v, ele) == 0 {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *TreeSet) Len() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return len(s.eles)
+	return s.eles.Len()
 }
 
 func (s *TreeSet) ToSlice() []Element {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	l := make([]Element, len(s.eles))
-	for i, v := range s.eles {
-		l[i] = v
-	}
+	l := make([]Element, 0, s.eles.Len())
+	s.eles.Ascend(func(v btree.Item) bool {
+		l = append(l, s.fromItem(v))
+		return true
+	})
 	return l
 }
