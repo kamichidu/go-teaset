@@ -2,6 +2,7 @@ package generator
 
 import (
 	"go/ast"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"path"
@@ -27,11 +28,17 @@ func ParseFile(baseImpl string) (*token.FileSet, *ast.File, error) {
 	return fset, aFile, err
 }
 
-func ParseElementType(s string) (pkgPath, typName string) {
+func ParseElementType(s string) (pkgPath, pkgName, typName string) {
 	idx := strings.LastIndex(s, ".")
 	if idx < 0 {
-		return "", s
+		return "", "", s
 	}
 	x, sel := s[:idx], s[idx+1:]
-	return strings.Trim(x, `"`), sel
+	pkgPath = strings.Trim(x, `"`)
+	typName = sel
+	tPkg, err := importer.Default().Import(pkgPath)
+	if err != nil {
+		panic(err)
+	}
+	return pkgPath, tPkg.Name(), typName
 }

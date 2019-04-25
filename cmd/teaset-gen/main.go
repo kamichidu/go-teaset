@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -123,7 +122,7 @@ func run(stderr io.Writer, args []string) int {
 		}
 		return 1
 	}
-	eleTypPkgPath, eleTypName := generator.ParseElementType(*eleTyp)
+	eleTypPkgPath, eleTypPkgName, eleTypName := generator.ParseElementType(*eleTyp)
 	var imports []string
 	if eleTypPkgPath != "" {
 		imports = append(imports, eleTypPkgPath)
@@ -135,8 +134,8 @@ func run(stderr io.Writer, args []string) int {
 	// replace package name
 	applyer = append(applyer, generator.ReplaceExactIdentName("template", *pkg))
 	// replace Element
-	if eleTypPkgPath != "" {
-		applyer = append(applyer, generator.ReplaceExactIdentName("Element", path.Base(eleTypPkgPath)+"."+eleTypName))
+	if eleTypPkgName != "" {
+		applyer = append(applyer, generator.ReplaceExactIdentName("Element", eleTypPkgName+"."+eleTypName))
 	} else {
 		applyer = append(applyer, generator.ReplaceExactIdentName("Element", eleTypName))
 	}
