@@ -123,9 +123,12 @@ func run(stderr io.Writer, args []string) int {
 		return 1
 	}
 	eleTypPkgPath, eleTypPkgName, eleTypName := generator.ParseElementType(*eleTyp)
-	var imports []string
+	var imports []generator.Import
 	if eleTypPkgPath != "" {
-		imports = append(imports, eleTypPkgPath)
+		imports = append(imports, generator.Import{
+			PkgName: eleTypPkgName,
+			Path:    eleTypPkgPath,
+		})
 	}
 	var applyer []astutil.ApplyFunc
 	if *debug {
