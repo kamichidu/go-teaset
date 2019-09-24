@@ -36,7 +36,7 @@ func ParseElementType(s string) (pkgPath, pkgName, typName string) {
 	x, sel := s[:idx], s[idx+1:]
 	pkgPath = strings.Trim(x, `"`)
 	typName = sel
-	tPkg, err := importer.Default().Import(pkgPath)
+	tPkg, err := importer.ForCompiler(token.NewFileSet(), "source", nil).Import(pkgPath)
 	if err != nil {
 		panic(err)
 	}
